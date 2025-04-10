@@ -114,19 +114,3 @@ class FoodDB(SQLModel, table=True):
 
     def __repr__(self):
         return f"<FoodDB(name={self.name}, uuid={self.uuid})>"
-
-
-class StatsDB(SQLModel, table=True):
-    """Stats model for the database"""
-
-    __tablename__ = "stats"
-    food_id: UUID = Field(primary_key=True, foreign_key="testfood.uuid")
-    food_name: str = Field(foreign_key="testfood.uuid")
-    # food: FoodDB = Relationship(
-    #     back_populates="stats",
-    #     sa_relationship_kwargs={"cascade": "all, delete-orphan"},
-    #     foreign_keys=["testfood.uuid"],
-    # )
-
-    def __repr__(self):
-        return f"<StatsDB(food_id={self.food_id}, count={self.count})>"

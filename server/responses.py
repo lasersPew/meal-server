@@ -1,4 +1,4 @@
-from .database import FoodDB, StatsDB, UserDB
+from .database import FoodDB, UserDB
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 
@@ -79,21 +79,6 @@ class UserResponses(BaseResponse):
             "result": self.result,
             "response": self.response,
             "data": self.data,
-        }
-
-    def to_json(self):
-        return self.to_dict()
-
-
-class StatsResponse(BaseResponse):
-    response: str = "entity"
-    data: StatsDB
-
-    def to_dict(self):
-        return {
-            "result": self.result,
-            "response": self.response,
-            "data": self.data.model_dump(),
         }
 
     def to_json(self):
