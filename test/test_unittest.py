@@ -1,8 +1,12 @@
 import requests
 import unittest
 from uuid import uuid4
+import os
+from dotenv import load_dotenv
 
-baseURL = "http://127.0.0.1:8000/"
+load_dotenv()
+
+baseUrl = os.environ.get("baseUrl", default="http://127.0.0.1:8000/")
 username = "testuser1"
 password = "testuser1"
 
@@ -11,13 +15,13 @@ class TestAPI(unittest.TestCase):
     timeout = 5
 
     def test_ping(self):
-        resp = requests.get(f"{baseURL}/api/ping").content
+        resp = requests.get(f"{baseUrl}/api/ping").content
         self.assertEqual(resp, b'"pong"')
 
     def test_api(self):
-        resp = requests.get(f"{baseURL}/test").json()
+        resp = requests.get(f"{baseUrl}/test").json()
         error = resp["errors"][0]
-        errortxt = f"Nope, this isn't the API you're looking for, maybe try checking the docs? at {baseURL.strip('/')}/docs"
+        errortxt = f"Nope, this isn't the API you're looking for, maybe try checking the docs? at {baseUrl.strip('/')}/docs"
         self.assertEqual(errortxt, error["detail"])
 
 
@@ -37,7 +41,7 @@ class TestFood(unittest.TestCase):
 
     def _create(self):
         resp = requests.post(
-            f"{baseURL}/api/food/add",
+            f"{baseUrl}/api/food/add",
             json={
                 "food_id": str(self.food_id),
                 "name": self.name,
@@ -56,7 +60,7 @@ class TestFood(unittest.TestCase):
         self.assertEqual(resp["brand"], self.brand)
 
     def _list(self):
-        resp = requests.get(f"{baseURL}/api/food/get", params={"limit": 100})
+        resp = requests.get(f"{baseUrl}/api/food/get", params={"limit": 100})
         if resp.status_code != 200:
             self.assertTrue(True)
             return
@@ -72,7 +76,7 @@ class TestFood(unittest.TestCase):
         self.assertTrue(in_list)
 
     def _get(self):
-        resp = requests.get(f"{baseURL}/api/food/get/{self.food_id}")
+        resp = requests.get(f"{baseUrl}/api/food/get/{self.food_id}")
         if resp.status_code != 200:
             self.assertTrue(True)
             return
@@ -83,7 +87,7 @@ class TestFood(unittest.TestCase):
 
     def _update(self):
         resp = requests.put(
-            f"{baseURL}/api/food/update/{self.food_id}", json={"weight": 2}
+            f"{baseUrl}/api/food/update/{self.food_id}", json={"weight": 2}
         )
         if resp.status_code != 200:
             self.assertTrue(True)
@@ -98,7 +102,7 @@ class TestFood(unittest.TestCase):
         jwt_code = TestUser.login(username, password)
         headers = {"Authorization": f"Bearer {jwt_code}"}
         resp = requests.delete(
-            f"{baseURL}/api/food/delete/{self.food_id}", headers=headers
+            f"{baseUrl}/api/food/delete/{self.food_id}", headers=headers
         ).json()
         self.assertEqual(resp["result"], "ok")
 
@@ -116,7 +120,7 @@ class TestUser(unittest.TestCase):
     @staticmethod
     def login(username: str, password: str) -> str:
         resp = requests.post(
-            f"{baseURL}/api/auth/login",
+            f"{baseUrl}/api/auth/login",
             params={
                 "username": username,
                 "password": password,
@@ -133,7 +137,7 @@ class TestUser(unittest.TestCase):
 
     def _createUser(self):
         resp = requests.post(
-            f"{baseURL}/api/user/add",
+            f"{baseUrl}/api/user/add",
             json={
                 "user_id": self.user_id,
                 "username": self.username,
@@ -151,7 +155,7 @@ class TestUser(unittest.TestCase):
         self.assertEqual(resp["username"], self.username)
 
     def _listUsers(self):
-        resp = requests.get(f"{baseURL}/api/user/get", params={"limit": 100})
+        resp = requests.get(f"{baseUrl}/api/user/get", params={"limit": 100})
         if resp.status_code != 200:
             self.assertTrue(True)
             return
@@ -167,7 +171,7 @@ class TestUser(unittest.TestCase):
         self.assertTrue(in_list)
 
     def _getUser(self):
-        resp = requests.get(f"{baseURL}/api/user/get/{self.user_id}")
+        resp = requests.get(f"{baseUrl}/api/user/get/{self.user_id}")
         if resp.status_code != 200:
             self.assertTrue(True)
             return
@@ -178,7 +182,7 @@ class TestUser(unittest.TestCase):
 
     def _updateUser(self):
         resp = requests.put(
-            f"{baseURL}/api/user/update/{self.user_id}", json={"first_name": "Test "}
+            f"{baseUrl}/api/user/update/{self.user_id}", json={"first_name": "Test "}
         )
         if resp.status_code != 200:
             self.assertTrue(True)
@@ -193,7 +197,7 @@ class TestUser(unittest.TestCase):
         jwt_code = self.login(self.username, self.password)
         headers = {"Authorization": f"Bearer {jwt_code}"}
         resp = requests.delete(
-            f"{baseURL}/api/user/delete/{self.user_id}",
+            f"{baseUrl}/api/user/delete/{self.user_id}",
             params={
                 "user_id": self.user_id,
             },
