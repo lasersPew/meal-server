@@ -1,10 +1,13 @@
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.openapi.utils import get_openapi
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from server.database import create_db_and_tables
 from alembic import command
 from alembic.config import Config
+from fastapi.openapi.utils import get_openapi  # Ensure this import is present
 
 # from server.routes import Food
 from server.router import Food, User
@@ -31,7 +34,7 @@ async def lifespan(_: FastAPI):  # Replace 'app' with '_' to indicate it's unuse
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="Plan-a-meal API")
 app.include_router(Food().router, prefix="/api", tags=["Food"])
 app.include_router(User().router, prefix="/api", tags=["User"])
 app.include_router(Auth().router, prefix="/api", tags=["Auth"])
@@ -54,14 +57,14 @@ def custom_openapi():
         description="""
 Plan-a-meal is a meal planning application that allows users to create, manage, and share meal plans. The application provides a user-friendly interface for selecting recipes, generating shopping lists, and tracking nutritional information. Users can also customize their meal plans based on dietary preferences and restrictions.
 
-This document describes API as it is right now, but it is not final. The API is still under development and may change in the future. 
+This document describes the API as it is right now, but it is not final. The API is still under development and may change in the future.
 
 Please refer to the documentation for the latest updates.
 
 The API is designed to be RESTful and follows standard conventions for HTTP methods and status codes. Each endpoint is documented with its purpose, request parameters, and response formats.
 
 The API supports authentication and authorization mechanisms to ensure secure access to user data.
-                """,
+        """,
         routes=app.routes,
     )
     openapi_schema["components"]["securitySchemes"] = {"BearerAuth": security_scheme}
@@ -75,9 +78,28 @@ The API supports authentication and authorization mechanisms to ensure secure ac
 app.openapi = custom_openapi
 
 
-@app.api_route(
-    "/api/ping", methods=["GET", "POST"], tags=["Status"], operation_id="ping_status"
-)
+@app.get("/docs", include_in_schema=False)
+def swagger_ui_html(req: Request) -> HTMLResponse:
+    root_path = req.scope.get("root_path", "").rstrip("/")
+    openapi_url = root_path + "/openapi.json"
+    return get_swagger_ui_html(
+        openapi_url=openapi_url,
+        title="Plan-a-meal",
+        swagger_favicon_url="/static/favicon.ico",
+        swagger_ui_parameters=app.swagger_ui_parameters,
+    )
+
+
+# Mount the static directory to serve the favicon
+app.mount("/static", StaticFiles(directory="./static"), name="static")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return RedirectResponse(url="/static/favicon.ico")
+
+
+@app.get("/api/ping", tags=["Status"], operation_id="ping_status")
 def ping():
     return "pong"
 

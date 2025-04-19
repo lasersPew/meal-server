@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from typing import Optional, Annotated
 from sqlmodel import Session, select
