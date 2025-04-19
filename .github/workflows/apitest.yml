@@ -37,7 +37,7 @@ jobs:
         done
 
         # Run tests
-        python -m unittest test/test_unittest.py
+        python -m unittest -v test/test_unittest.py 
 
         # Kill the server
         kill $SERVER_PID
