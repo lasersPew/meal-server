@@ -2,6 +2,13 @@ name: Test API made using FastAPI
 
 on: [push, pull_request]
 
+env:
+  ALGORITHM: HS256
+  SECRET_KEY: supersecretkey
+  baseUrl: http://127.0.0.1:8000
+  DB_URL: sqlite:///db_url
+  ALEMBIC_DB_URL: sqlite:///db_url
+
 jobs:
   test:
     runs-on: ubuntu-latest
