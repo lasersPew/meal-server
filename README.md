@@ -7,6 +7,7 @@
 - [Usage](#usage)
   - [Running it natively](#running-it-natively)
   - [Running it in a Virtual Environment](#running-it-in-a-virtual-environment)
+- [Packages Used](#packages-used)
 - [Contributors](#contributors)
 
 ## Intro
@@ -50,6 +51,16 @@ pip install -r requirements.txt
 fastapi run --reload main.py
 # or fastapi run --reload main.py to run locally
 ```
+
+## Packages used
+
+- `alembic` - Database migrations
+- `fastapi[standard]` - API itself
+- `python-jose` - Authentication and Authorization with JWT and Bearer tokens
+- `python-dotenv` - Environment variables
+- `uuid` - UUID Generation
+- `passlib[argon2]` - argon2id encryptor and decryptor
+- `sqlmodel` - SQL-related things
 
 ### Contributors
 

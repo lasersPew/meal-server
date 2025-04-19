@@ -1,0 +1,4 @@
+#DB_URL=postgresql+asynte:///./test.db
+DB_URL=sqlite:///db_url
+SECRET_KEY=supersecretkey
+ALGORITHM=HS256

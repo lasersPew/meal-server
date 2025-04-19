@@ -1,20 +1,19 @@
-from .database import FoodDB, UserDB
-from pydantic import BaseModel
-from typing import List, Optional, Dict
+from .models import UserModel, FoodModel
+from pydantic import BaseModel, ConfigDict
+from typing import List, Optional
 
 
-# return {"result": "ok", "response": "entity", "data": db_food}
-class BaseResponse(BaseModel):
-    result: str
-
-
-class AuthResponse(BaseResponse):
+class MainResponse(BaseModel):
     result: str = "ok"
-    access_token: str
-    token_type: str = "bearer"
+    data: Optional[dict]
 
 
-class ErrorResponse(BaseResponse):
+class AuthResponse(BaseModel):
+    result: str = "ok"
+    data: Optional[str]
+
+
+class ErrorResponse(BaseModel):
     result: str = "error"
     error: dict = {
         "status": int,
@@ -24,62 +23,32 @@ class ErrorResponse(BaseResponse):
     }
 
 
-class UserResponse(BaseResponse):
+class UserResponse(BaseModel):
     result: str = "ok"
     response: str = "entity"
-    data: UserDB
-
-    def to_dict(self):
-        return {
-            "result": self.result,
-            "response": self.response,
-            "data": self.data.model_dump(),
-        }
-
-    def to_json(self):
-        return self.to_dict()
+    data: UserModel
 
 
-class FoodResponses(BaseResponse):
+class APIResponse(BaseModel):
+    result: str = "ok"
+    message: str
+
+
+class FoodResponses(BaseModel):
+    result: str = "ok"
     response: str = "list"
-    data: List[FoodDB]
-
-    def to_dict(self):
-        return {
-            "result": self.result,
-            "response": self.response,
-            "data": [food.model_dump() for food in self.data],
-        }
-
-    def to_json(self):
-        return self.to_dict()
+    data: List[FoodModel]
 
 
-class FoodResponse(BaseResponse):
+class FoodResponse(BaseModel):
+    result: str = "ok"
     response: str = "entity"
-    data: FoodDB
-
-    def to_dict(self):
-        return {
-            "result": self.result,
-            "response": self.response,
-            "data": self.data.model_dump(),
-        }
-
-    def to_json(self):
-        return self.to_dict()
+    data: FoodModel
 
 
-class UserResponses(BaseResponse):
+class UserResponses(BaseModel):
+    result: str = "ok"
     response: str = "list"
-    data: Dict[str, List]  # Expect a list of serialized dictionaries
+    data: List[UserModel]
 
-    def to_dict(self):
-        return {
-            "result": self.result,
-            "response": self.response,
-            "data": self.data,
-        }
-
-    def to_json(self):
-        return self.to_dict()
+    model_config = ConfigDict(from_attributes=True)

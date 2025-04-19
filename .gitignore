@@ -182,13 +182,10 @@ cython_debug/
 *.db-journal
 *.db-shm
 *.db-wal
-*.log
 *.pid
 *.pid.lock
 *.pdb
 *.pdb.lock
 *.pdb-shm
 *.pdb-wal
-*.log
-*.pid
-*.pid.lock
+.idea/

@@ -1,23 +1,43 @@
 """API Models"""
 
-from typing import Union, List, Optional
+from typing import Union, Optional
 from uuid import UUID, uuid4
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
-class User(BaseModel):
+class UserModel(BaseModel):
     """User Model"""
 
     uuid: UUID = Field(default_factory=uuid4)
     username: str
-    password: str
+    password: Optional[str] = None  # Make password optional
     email: str
     first_name: Optional[str]
     last_name: Optional[str]
     is_admin: bool = Field(default=False)
 
+    # Pydantic configuration
+    model_config = ConfigDict(from_attributes=True)
 
-class FoodQuery(BaseModel):
+    def get_attribute(self, item):
+        """Get attribute of the User object
+        Args:
+            item (str): Attribute name
+        Returns:
+            Union[str, None]: Attribute value or None
+        """
+        if not isinstance(item, str):
+            raise TypeError("item must be a string")
+        if not hasattr(self, item):
+            raise AttributeError(f"{item} not found in User object")
+        return getattr(self, item, None)
+
+    def __str__(self):
+        """String representation of the User object"""
+        return f"User(username={self.username}, email={self.email}, is_admin={self.is_admin})"
+
+
+class FoodQueryModel(BaseModel):
     """Food Query Model"""
 
     name: Optional[str]
@@ -30,14 +50,32 @@ class FoodQuery(BaseModel):
     max_carbohydrates: Optional[float]
 
 
-class Food(BaseModel):
+class UserQueryModel(BaseModel):
+    """User Query Model"""
+
+    uuid: UUID = Field(default_factory=uuid4)
+
+
+class StatsDB(BaseModel):
+    """Stats database model for managing statistics."""
+
+    stats_id: UUID = Field(default_factory=uuid4)
+    food_id: "FoodModel"
+    date: str
+    weight: float
+    calories: float
+
+    def __repr__(self):
+        return f"<StatsDB(stats_id={self.stats_id}, date={self.date})>"
+
+
+class FoodModel(BaseModel):
     """Food Item Model"""
 
     name: str
-    uuid: UUID = Field(default_factory=uuid4)
+    food_id: UUID = Field(default_factory=uuid4)
     brand: Union[str, None]
     weight: Optional[float]
-    barcode: Optional[List[str]]
 
     # Nutritional facts
     calories: Optional[int]
@@ -92,5 +130,4 @@ class Food(BaseModel):
 
     def __str__(self):
         """String representation of the Food object"""
-        return f"Food(name={self.name}, brand={self.brand}, \
-            weight={self.weight}, barcode={self.barcode})"
+        return f"Food(name={self.name}, brand={self.brand}, weight={self.weight})"
