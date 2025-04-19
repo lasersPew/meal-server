@@ -1,8 +1,8 @@
-"Does things on database"
+"""Does things on database"""
 
 import os
 from passlib.context import CryptContext
-from uuid import UUID, uuid4
+from uuid import uuid4
 from typing import Optional
 from sqlmodel import Field, Session, SQLModel, create_engine
 from dotenv import load_dotenv
@@ -31,10 +31,11 @@ def get_session():
 
 
 class UserDB(SQLModel, table=True):
-    """User model for the database"""
+    """User database model for managing user data."""
 
-    __tablename__ = "users"
-    uuid: UUID = Field(primary_key=True, default=None)
+    __tablename__: str = os.environ.get("USER_TABLE_NAME", "testuser")  # type: ignore
+
+    user_id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     username: str = Field(nullable=False, unique=True)
     password: str = Field(nullable=False)
     email: str = Field(nullable=False, unique=True)
@@ -42,10 +43,8 @@ class UserDB(SQLModel, table=True):
     last_name: Optional[str] = Field(nullable=True)
     is_admin: bool = Field(default=False, nullable=False)
 
-    def __repr__(  # type: ignore
-        self,
-    ) -> str:
-        return f"UserDB(uuid={self.uuid}, username={self.username}, email={self.email}, is_admin={self.is_admin})"
+    def __repr__(self) -> str:
+        return f"UserDB(uuid={self.user_id}, username={self.username}, email={self.email}, is_admin={self.is_admin})"
 
     @staticmethod
     def hash_password(password: str) -> str:
@@ -66,9 +65,30 @@ class UserDB(SQLModel, table=True):
         return self.verify_password(self.password, password)
 
 
+# class StatsDB(SQLModel, table=True):
+#     """Stats database model for managing statistics."""
+
+#     __tablename__: str = os.environ.get("STATS_TABLE_NAME", "teststats")  # type: ignore
+
+#     stats_id: str = Field(primary_key=True, default_factory=lambda: str(uuid4()))
+#     food_id: str = Field(foreign_key="testfood.food_id", unique=True)
+#     food: "FoodDB" = Relationship("FoodModel", backref="stats", foreign_keys=[food_id])
+
+#     hits: int = Field(default=0)
+
+#     def __repr__(self):
+#         return f"<StatsDB(stats_id={self.stats_id}, hits={self.hits})>"
+
+
 class FoodDB(SQLModel, table=True):
-    __tablename__ = "fooddb"
-    uuid: UUID = Field(primary_key=True, default=uuid4())
+    """Food database model for managing food data."""
+
+    __tablename__: str = os.environ.get("FOOD_TABLE_NAME", "testfood")  # type: ignore
+
+    food_id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    # stats_id: Optional[str] = Field(unique=True, foreign_key="teststats.stats_id")
+    # stats: Optional[StatsDB] = Relationship(back_populates="food")
+
     name: str = Field(nullable=False)
     brand: str = Field(nullable=True)
     weight: float = Field(nullable=True)
@@ -107,10 +127,10 @@ class FoodDB(SQLModel, table=True):
     vitamin_b12: float = Field(nullable=True)
     folate: float = Field(nullable=True)
     vitamin_c: float = Field(nullable=True)
-    # stats: Optional["StatsDB"] = Relationship(
-    #     back_populates="food",
-    #     sa_relationship_kwargs={"cascade": "all, delete-orphan"}
-    # )
 
     def __repr__(self):
-        return f"<FoodDB(name={self.name}, uuid={self.uuid})>"
+        return f"<FoodDB(name={self.name}, uuid={self.food_id})>"
+
+    # def increment_hits(self):
+    #     if self.stats:
+    #         self.stats.hits += 1

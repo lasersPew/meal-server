@@ -1,0 +1,5 @@
+DB_URL=sqlite:///db_url
+ALEMBIC_DB_URL=sqlite:///db_url
+SECRET_KEY=supersecretkey
+ALGORITHM=HS256
+baseUrl=http://127.0.0.1:8000

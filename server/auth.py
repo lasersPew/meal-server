@@ -16,6 +16,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")  # Define the token
 
 
 class Auth:
+    """Handles authentication processes including login and token management."""
+
     def __init__(self):
         self.router = APIRouter(prefix="/auth")
         self._add_routes()
@@ -23,10 +25,13 @@ class Auth:
     def _add_routes(self):
         self.router.post("/login", response_model=AuthResponse)(self.login)
 
-    def verify_password(self, plain_password: str, hashed_password: str):
+    @staticmethod
+    def verify_password(plain_password: str, hashed_password: str):
         return pwd_context.verify(plain_password, hashed_password)
 
-    def create_access_token(self, username: str):
+    @staticmethod
+    def create_access_token(username: str) -> str:
+        """Creates a JWT access token for the given username."""
         expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
             minutes=30
         )
@@ -40,16 +45,29 @@ class Auth:
     async def login(
         self, username: str, password: str, session: Session = Depends(get_session)
     ) -> AuthResponse:
-        user = session.exec(select(UserDB).where(UserDB.username == username)).first()
+        """Login and create a JWT token.
+        This function verifies the username and password, and if valid, returns an access token.
+        """
+        query = select(UserDB).where(UserDB.username == username)
+        user = session.exec(query).first()
         if not user or not self.verify_password(password, user.password):
             raise UnauthorizedError(detail="Incorrect username or password")
-        return AuthResponse(access_token=self.create_access_token(user.username))
+        return AuthResponse(data=self.create_access_token(user.username))
 
+    @staticmethod
     async def get_current_user(
-        self,
         token: str = Depends(oauth2_scheme),
         session: Session = Depends(get_session),
-    ) -> UserDB:  # Updated to use OAuth2PasswordBearer
+    ) -> UserDB:
+        """Get the current user from the token.
+        This function decodes the JWT token and retrieves the user from the database.
+        If the token is invalid or the user does not exist, it raises an error.
+        This function is used as a dependency in FastAPI routes.
+        It uses the OAuth2PasswordBearer dependency to extract the token from the request.
+        The token is then decoded to get the username, which is used to fetch the user from the database.
+        If the token is invalid or the user does not exist, it raises an error.
+        This function is used to protect routes that require authentication.
+        """
         try:
             payload = jwt.decode(
                 token,
@@ -58,10 +76,11 @@ class Auth:
             )
             username = payload.get("sub")
             if not username:
-                raise BadRequestError(details="Invalid token")
+                raise BadRequestError(detail="Invalid token")
         except JWTError:
-            raise BadRequestError(details="Invalid token")
-        user = session.exec(select(UserDB).where(UserDB.username == username)).first()
+            raise BadRequestError(detail="Invalid token")
+        query = select(UserDB).where(UserDB.username == username)
+        user = session.exec(query).first()
         if not user:
             raise NotFoundError(detail="User not found")
         return user
