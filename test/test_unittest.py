@@ -11,6 +11,20 @@ username = "testuser1"
 password = "testuser1"
 
 
+def init():
+    # initialize:
+    requests.post(
+        f"{baseUrl}/api/user/add",
+        json={
+            "user_id": str(uuid4()),
+            "username": username,
+            "password": password,
+            "email": f"{username}@example.com",
+            "is_admin": True,
+        },
+    )
+
+
 class TestAPI(unittest.TestCase):
     timeout = 5
 
@@ -207,4 +221,5 @@ class TestUser(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    init()
     unittest.main()

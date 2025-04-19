@@ -9,7 +9,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python
+    - name: Set up Python5
+    
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
@@ -18,7 +19,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install requests packaging python-dotenv
+        pip install requests packaging python-dotenv argon2-cffi
 
     - name: Run FastAPI app and tests
       run: |
@@ -37,7 +38,7 @@ jobs:
         done
 
         # Run tests
-        python -m unittest -v test/test_unittest.py 
+        python test/test_unittest.py 
 
         # Kill the server
         kill $SERVER_PID
