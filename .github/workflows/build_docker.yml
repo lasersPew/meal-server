@@ -1,41 +1,30 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Build and Publish Docker image on GitHub Container Registry
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    paths-ignore: 
+    branches: [ master ]
+    tags: [ 'v*' ]
+    paths-ignore:
       - '*.md'
       - LICENSE
       - 'example.flaskenv'
       - '.gitattributes'
       - '.github/workflows/docker.yml'
       - '.dockerignore'
-      
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # setup Docker build action
       - name: Set up Docker Buildx
-        id: buildx
         uses: docker/setup-buildx-action@v1
 
       - name: Login to GitHub Container Registry
@@ -45,11 +34,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image and push to GitHub Container Registry
+      - name: Build and push Docker image
+        id: docker_build
         uses: docker/build-push-action@v2
         with:
-          context: ./
-          tags: ghcr.io/laserspew/meal-server:latest
-          push: ${{ github.ref == 'refs/heads/master' }}
-      - name: Image digest
+          context: .
+          tags: |
+            ghcr.io/laserspew/meal-server:latest
+            ghcr.io/laserspew/meal-server:${{ github.ref_name }}
+          push: true
+
+      - name: Show image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
