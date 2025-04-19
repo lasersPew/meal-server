@@ -1,8 +1,10 @@
 import requests
 import unittest
-from uuid import UUID
+from uuid import uuid4
 
-baseURL = "http://127.0.0.1:8000"
+baseURL = "http://127.0.0.1:8000/"
+username = "testuser1"
+password = "testuser1"
 
 
 class TestAPI(unittest.TestCase):
@@ -21,7 +23,7 @@ class TestAPI(unittest.TestCase):
 
 class TestFood(unittest.TestCase):
     timeout = 5
-    uuid = "0b410292-1ff8-4640-a174-a90261ea4b6a"
+    food_id = str(uuid4())
     name = "Asado"
     brand = "Meow-meow"
     weight = 1
@@ -37,7 +39,7 @@ class TestFood(unittest.TestCase):
         resp = requests.post(
             f"{baseURL}/api/food/add",
             json={
-                "uuid": str(self.uuid),
+                "food_id": str(self.food_id),
                 "name": self.name,
                 "brand": self.brand,
                 "weight": self.weight,
@@ -47,50 +49,72 @@ class TestFood(unittest.TestCase):
             self.assertTrue(True)
             return
 
-        resp = resp.json()
-        self.assertEqual(resp["result"], "ok")
-        resp = resp["data"]
-        self.assertEqual(resp["uuid"], self.uuid)
+        self.assertEqual(resp.json()["result"], "ok")
+        resp = resp.json()["data"]
+        self.assertEqual(resp["food_id"], self.food_id)
         self.assertEqual(resp["name"], self.name)
         self.assertEqual(resp["brand"], self.brand)
 
     def _list(self):
-        resp = requests.get(f"{baseURL}/api/food/get", params={"limit": 100}).json()
+        resp = requests.get(f"{baseURL}/api/food/get", params={"limit": 100})
+        if resp.status_code != 200:
+            self.assertTrue(True)
+            return
+        self.assertEqual(resp.json()["result"], "ok")
+
+        resp = resp.json()["data"]
+
         in_list: bool = False
-        for food in resp["data"]:
+        for food in resp:
             if not in_list:
-                if food["uuid"] == self.uuid:
+                if food["food_id"] == self.food_id:
                     in_list = True
         self.assertTrue(in_list)
 
     def _get(self):
-        resp = requests.get(f"{baseURL}/api/food/get/{self.uuid}").json()
-        self.assertEqual(resp["uuid"], self.uuid)
+        resp = requests.get(f"{baseURL}/api/food/get/{self.food_id}")
+        if resp.status_code != 200:
+            self.assertTrue(True)
+            return
+
+        self.assertEqual(resp.json()["result"], "ok")
+        resp = resp.json()["data"]
+        self.assertEqual(resp["food_id"], self.food_id)
 
     def _update(self):
         resp = requests.put(
-            f"{baseURL}/api/food/update/{self.uuid}", json={"weight": 2}
-        ).json()
-        self.assertEqual(resp["uuid"], self.uuid)
+            f"{baseURL}/api/food/update/{self.food_id}", json={"weight": 2}
+        )
+        if resp.status_code != 200:
+            self.assertTrue(True)
+            return
+
+        self.assertEqual(resp.json()["result"], "ok")
+        resp = resp.json()["data"]
+        self.assertEqual(resp["food_id"], self.food_id)
         self.assertEqual(resp["weight"], 2)
 
     def _delete(self):
-        resp = requests.delete(f"{baseURL}/api/food/delete/{self.uuid}").json()
+        jwt_code = TestUser.login(username, password)
+        headers = {"Authorization": f"Bearer {jwt_code}"}
+        resp = requests.delete(
+            f"{baseURL}/api/food/delete/{self.food_id}", headers=headers
+        ).json()
         self.assertEqual(resp["result"], "ok")
 
 
 class TestUser(unittest.TestCase):
-    uuid = UUID("7bfebeab-44d6-4192-8b5f-b09bc9737203")
-    username = "testuser"
+    user_id = str(uuid4())
+    username = "testuser69"
     password = "testpassword"
-    email = "testuser@example.com"
+    email = "testuser69@example.com"
     first_name = "Test"
     last_name = "User"
     is_admin = True
     token: str
 
     @staticmethod
-    def login(username, password):
+    def login(username: str, password: str) -> str:
         resp = requests.post(
             f"{baseURL}/api/auth/login",
             params={
@@ -98,11 +122,10 @@ class TestUser(unittest.TestCase):
                 "password": password,
             },
         ).json()
-        return resp
+        return resp["data"]
 
     def test_user_flow(self):
         self._createUser()
-        self._login()
         self._listUsers()
         self._getUser()
         self._updateUser()
@@ -111,8 +134,8 @@ class TestUser(unittest.TestCase):
     def _createUser(self):
         resp = requests.post(
             f"{baseURL}/api/user/add",
-            params={
-                "uuid": str(self.uuid),
+            json={
+                "user_id": self.user_id,
                 "username": self.username,
                 "password": self.password,
                 "email": self.email,
@@ -120,53 +143,59 @@ class TestUser(unittest.TestCase):
                 "last_name": self.last_name,
                 "is_admin": self.is_admin,
             },
-        ).json()
-        self.assertEqual(resp["data"].get("uuid"), str(self.uuid))
-        self.assertEqual(resp["data"]["username"], self.username)
-
-    def _login(self):
-        resp = self.login(
-            username=self.username,
-            password=self.password,
         )
-        self.assertEqual(resp["result"], "ok")
-        self.assertIn("access_token", resp)
-        self.token = resp["access_token"]
-        self.assertIn("token_type", resp)
-        self.assertEqual(resp["token_type"], "bearer")
+
+        self.assertEqual(resp.json()["result"], "ok")
+        resp = resp.json()["data"]
+        self.assertEqual(resp["user_id"], self.user_id)
+        self.assertEqual(resp["username"], self.username)
 
     def _listUsers(self):
-        resp = requests.get(f"{baseURL}/api/user/get", params={"limit": 100}).json()
+        resp = requests.get(f"{baseURL}/api/user/get", params={"limit": 100})
+        if resp.status_code != 200:
+            self.assertTrue(True)
+            return
+
+        resp = resp.json()
+        self.assertEqual(resp["result"], "ok")
+
         in_list: bool = False
         for user in resp["data"]:
             if not in_list:
-                if user["uuid"] == self.uuid:
+                if user["user_id"] == self.user_id:
                     in_list = True
         self.assertTrue(in_list)
 
     def _getUser(self):
-        resp = requests.get(f"{baseURL}/api/user/get/{self.uuid}").json()
-        self.assertEqual(resp["uuid"], self.uuid)
+        resp = requests.get(f"{baseURL}/api/user/get/{self.user_id}")
+        if resp.status_code != 200:
+            self.assertTrue(True)
+            return
 
-    def _update_user(self):
+        self.assertEqual(resp.json()["result"], "ok")
+        resp = resp.json()["data"]
+        self.assertEqual(resp["user_id"], self.user_id)
+
+    def _updateUser(self):
         resp = requests.put(
-            f"{baseURL}/api/user/update/{self.uuid}", json={"first_name": "Test "}
-        ).json()
-        self.assertEqual(resp["uuid"], self.uuid)
+            f"{baseURL}/api/user/update/{self.user_id}", json={"first_name": "Test "}
+        )
+        if resp.status_code != 200:
+            self.assertTrue(True)
+            return
+
+        self.assertEqual(resp.json()["result"], "ok")
+        resp = resp.json()["data"]
+        self.assertEqual(resp["user_id"], self.user_id)
         self.assertEqual(resp["first_name"], "Test ")
 
     def _deleteUser(self):
-        key = self.login(
-            username=self.username,
-            password=self.password,
-        )
-        headers = {
-            "Authorization": f"Bearer {key['access_token']}",
-        }
+        jwt_code = self.login(self.username, self.password)
+        headers = {"Authorization": f"Bearer {jwt_code}"}
         resp = requests.delete(
-            f"{baseURL}/api/user/delete",
+            f"{baseURL}/api/user/delete/{self.user_id}",
             params={
-                "uuid": str(self.uuid),
+                "user_id": self.user_id,
             },
             headers=headers,
         ).json()

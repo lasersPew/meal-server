@@ -44,12 +44,13 @@ class Food:
         )
 
     @staticmethod
-    async def get_food(session: SessionDep, food_id: UUID) -> FoodResponse:
+    async def get_food(session: SessionDep, food_id: str) -> FoodResponse:
         food = session.get(FoodDB, food_id)
         if not food:
             raise NotFoundError(detail=f"No food item with {food_id} found")
-        # result = FoodModel.model_validate(food).model_dump(exclude_unset=True)
-        result = FoodModel.model_validate(food)
+        result = FoodModel.model_validate(
+            food.dict()
+        )  # Convert FoodDB instance to a dictionary
         return FoodResponse(result="ok", response="entity", data=result)
 
     @staticmethod
@@ -90,6 +91,8 @@ class Food:
     @staticmethod
     async def create_food(food: FoodDB, session: SessionDep) -> FoodResponse:
         db_food = FoodDB(**food.model_dump(exclude_unset=True))
+        if food.food_id:  # Use the provided UUID if it exists
+            db_food.food_id = food.food_id
         try:
             session.add(db_food)
             session.commit()
@@ -99,12 +102,14 @@ class Food:
                 detail=f"Food with id {db_food.food_id} already exists"
             )
         return FoodResponse(
-            result="ok", response="entity", data=FoodModel.model_validate(db_food)
+            result="ok",
+            response="entity",
+            data=FoodModel.model_validate(db_food.dict()),
         )
 
     @staticmethod
     async def update_food(
-        food_id: UUID, food: FoodDB, session: SessionDep
+        food_id: str, food: FoodDB, session: SessionDep
     ) -> FoodResponse:
         existing = session.get(FoodDB, food_id)
         if not existing:
@@ -114,12 +119,14 @@ class Food:
         session.commit()
         session.refresh(existing)
         return FoodResponse(
-            result="ok", response="entity", data=FoodModel.model_validate(existing)
+            result="ok",
+            response="entity",
+            data=FoodModel.model_validate(existing.dict()),  # Convert to dictionary
         )
 
     @staticmethod
     async def delete_food(
-        food_id: UUID, session: SessionDep, current_user: CurrentUserDep
+        food_id: str, session: SessionDep, current_user: CurrentUserDep
     ) -> MainResponse:
         if not current_user.is_admin:
             raise ForbiddenError(detail="Admin privileges needed to delete food.")
@@ -148,7 +155,7 @@ class User:
         )
 
     @staticmethod
-    async def get_user(session: SessionDep, user_id: UUID) -> UserResponse:
+    async def get_user(session: SessionDep, user_id: str) -> UserResponse:
         user = session.get(UserDB, user_id)
         if not user:
             raise NotFoundError(detail="No users found")
@@ -184,7 +191,7 @@ class User:
 
     @staticmethod
     async def update_user(
-        user_id: UUID, user: UserDB, session: SessionDep
+        user_id: str, user: UserDB, session: SessionDep
     ) -> UserResponse:
         db_user = session.get(UserDB, user_id)
         if not db_user:
@@ -201,7 +208,7 @@ class User:
 
     @staticmethod
     async def delete_user(
-        user_id: UUID, session: SessionDep, current_user: CurrentUserDep
+        user_id: str, session: SessionDep, current_user: CurrentUserDep
     ) -> MainResponse:
         if current_user.user_id != user_id and not current_user.is_admin:
             raise ForbiddenError(

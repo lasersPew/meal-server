@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, ConfigDict
 class UserModel(BaseModel):
     """User Model"""
 
-    uuid: UUID = Field(default_factory=uuid4)
+    user_id: UUID = Field(default_factory=uuid4)
     username: str
     password: Optional[str] = None  # Make password optional
     email: str
@@ -41,7 +41,7 @@ class FoodQueryModel(BaseModel):
     """Food Query Model"""
 
     name: Optional[str]
-    uuid: UUID = Field(default_factory=uuid4)
+    food_id: UUID = Field(default_factory=uuid4)
     min_calories: Optional[int]
     max_calories: Optional[int]
     min_protein: Optional[float]
@@ -53,7 +53,7 @@ class FoodQueryModel(BaseModel):
 class UserQueryModel(BaseModel):
     """User Query Model"""
 
-    uuid: UUID = Field(default_factory=uuid4)
+    user_id: UUID = Field(default_factory=uuid4)
 
 
 class StatsDB(BaseModel):
