@@ -204,3 +204,7 @@ class TestUser(unittest.TestCase):
             headers=headers,
         ).json()
         self.assertEqual(resp["result"], "ok")
+
+
+if __name__ == "__main__":
+    unittest.main()
