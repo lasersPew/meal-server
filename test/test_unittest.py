@@ -29,11 +29,15 @@ class TestAPI(unittest.TestCase):
     timeout = 5
 
     def test_ping(self):
-        resp = requests.get(f"{baseUrl}/api/ping").content
+        resp = requests.get(f"{baseUrl}/api/ping")
+        self.assertEqual(resp.status_code, 200)
+        resp = resp.content
         self.assertEqual(resp, b'"pong"')
 
     def test_api(self):
-        resp = requests.get(f"{baseUrl}/test").json()
+        resp = requests.get(f"{baseUrl}/test")
+        self.assertEqual(resp.status_code, 404)
+        resp = resp.json()
         error = resp["errors"][0]
         errortxt = f"Nope, this isn't the API you're looking for, maybe try checking the docs? at {baseUrl.strip('/')}/docs"
         self.assertEqual(errortxt, error["detail"])
@@ -63,9 +67,6 @@ class TestFood(unittest.TestCase):
                 "weight": self.weight,
             },
         )
-        if resp.status_code != 200:
-            self.assertTrue(True)
-            return
 
         self.assertEqual(resp.json()["result"], "ok")
         resp = resp.json()["data"]
@@ -75,9 +76,6 @@ class TestFood(unittest.TestCase):
 
     def _list(self):
         resp = requests.get(f"{baseUrl}/api/food/get", params={"limit": 100})
-        if resp.status_code != 200:
-            self.assertTrue(True)
-            return
         self.assertEqual(resp.json()["result"], "ok")
 
         resp = resp.json()["data"]
@@ -91,10 +89,6 @@ class TestFood(unittest.TestCase):
 
     def _get(self):
         resp = requests.get(f"{baseUrl}/api/food/get/{self.food_id}")
-        if resp.status_code != 200:
-            self.assertTrue(True)
-            return
-
         self.assertEqual(resp.json()["result"], "ok")
         resp = resp.json()["data"]
         self.assertEqual(resp["food_id"], self.food_id)
@@ -103,10 +97,6 @@ class TestFood(unittest.TestCase):
         resp = requests.put(
             f"{baseUrl}/api/food/update/{self.food_id}", json={"weight": 2}
         )
-        if resp.status_code != 200:
-            self.assertTrue(True)
-            return
-
         self.assertEqual(resp.json()["result"], "ok")
         resp = resp.json()["data"]
         self.assertEqual(resp["food_id"], self.food_id)
@@ -170,13 +160,9 @@ class TestUser(unittest.TestCase):
 
     def _listUsers(self):
         resp = requests.get(f"{baseUrl}/api/user/get", params={"limit": 100})
-        if resp.status_code != 200:
-            self.assertTrue(True)
-            return
+        self.assertEqual(resp.json()["result"], "ok")
 
         resp = resp.json()
-        self.assertEqual(resp["result"], "ok")
-
         in_list: bool = False
         for user in resp["data"]:
             if not in_list:
@@ -186,10 +172,6 @@ class TestUser(unittest.TestCase):
 
     def _getUser(self):
         resp = requests.get(f"{baseUrl}/api/user/get/{self.user_id}")
-        if resp.status_code != 200:
-            self.assertTrue(True)
-            return
-
         self.assertEqual(resp.json()["result"], "ok")
         resp = resp.json()["data"]
         self.assertEqual(resp["user_id"], self.user_id)
@@ -198,10 +180,6 @@ class TestUser(unittest.TestCase):
         resp = requests.put(
             f"{baseUrl}/api/user/update/{self.user_id}", json={"first_name": "Test "}
         )
-        if resp.status_code != 200:
-            self.assertTrue(True)
-            return
-
         self.assertEqual(resp.json()["result"], "ok")
         resp = resp.json()["data"]
         self.assertEqual(resp["user_id"], self.user_id)

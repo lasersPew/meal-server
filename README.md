@@ -52,6 +52,25 @@ fastapi run --reload main.py
 # or fastapi run --reload main.py to run locally
 ```
 
+### Running it using Docker
+
+```sh
+docker run -d \
+  --name meal-server \
+  --restart always \
+  -p 8000:8000 \
+  -e SECRET_KEY=supersecretkey \
+  -v meal_db:/config/database.db:rw \
+  ghcr.io/laserspew/meal-server:v1.3
+```
+
+### or Docker Compose
+
+```sh
+wget https://raw.githubusercontent.com/lasersPew/meal-server/refs/heads/master/docker-compose.yml
+docker compose up -d docker-compose.yml
+```
+
 ## Packages used
 
 - `alembic` - Database migrations

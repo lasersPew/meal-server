@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  meal-server:
+    container_name: meal-server
+    image: ghcr.io/laserspew/meal-server:v1.3
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    environment:
+      - SECRET_KEY=supersecretkey
+      # - INIT_DB=false
+    volumes:
+      - meal_db:/config/database.db:rw
+
+volumes:
+  meal_db:
