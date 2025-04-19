@@ -49,7 +49,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: ./
-          tags: ghcr.io/${{ github.repository_owner | toLowerCase }}/meal-server:latest
+          tags: ghcr.io/laserspew/meal-server:latest
           push: ${{ github.ref == 'refs/heads/master' }}
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
